@@ -1,6 +1,7 @@
 import { TextField } from '@material-ui/core';
 import React from 'react';
 import './App.css';
+import Leaderboard from './leaderboard/Leaderboard';
 
 type AppProps = {}
 
@@ -13,6 +14,7 @@ export default class App extends React.Component {
   render() {
     return (
       <div className="App">
+        <Leaderboard />
         <form autoComplete="off">
           <TextField id="user-name" label="User Name" required />
         </form>
