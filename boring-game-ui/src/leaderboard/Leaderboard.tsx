@@ -1,55 +1,53 @@
 import { List, ListItem, ListItemText } from '@material-ui/core';
-import React from 'react';
+import React, { Component } from 'react';
+import User from '../models/user.model';
 import './Leaderboard.css';
 
-type LeaderboardProps = {
-  loading: boolean,
-  users: any[],
-  error: any
-}
+type LeaderboardState = {
+  loading: boolean;
+  users: User[];
+  error: boolean;
+};
 
-export default class Leaderboard extends React.Component<{}, LeaderboardProps> {
-  constructor(props: LeaderboardProps) {
+export default class Leaderboard extends Component<Record<string, unknown>, LeaderboardState> {
+  constructor(props: Record<string, unknown>) {
     super(props);
     this.state = {
       loading: true,
-      error: null,
+      error: false,
       users: []
     };
   }
 
-  componentDidMount() {
-    this.getUserList();
+  componentDidMount(): void {
+    this.getUserScores();
   }
 
-  render() {
+  private getUserScores = async () => {
+    fetch('/api/v1/scores/')
+      .then((res) => res.json())
+      .then((res) => {
+        this.setState({ loading: false, users: res.content });
+      })
+      .catch(() => {
+        this.setState({ loading: false, error: true });
+      });
+  };
+
+  render(): React.ReactNode {
     const { loading, users, error } = this.state;
     return (
       <div>
-        {
-          users.length > 0 && users.map(user => (
-            <List aria-label="leaderboard list">
-              <ListItem button>
-                <ListItemText primary="Trash" />
-              </ListItem>
-            </List>
-            ))
-        }
-        { error && <div>Sorry, can not display the data</div>}
-      </div>);
-  }
-
-  private getUserList = async () => {
-    try { //try to get data
-        const response = await fetch("http://localhost:8080/api/leaderboard/");
-        if (response.ok) { // ckeck if status code is 200
-          const data = await response.json();
-          this.setState({ loading: false, users: data.results});
-        } else { 
-          this.setState({ loading: false, error: true });
-        }
-    } catch (e) { //code will jump here if there is a network problem
-      this.setState({ loading: false, error: true });
-    }
+        <List aria-label="leaderboard list">
+          {users.map((user) => (
+            <ListItem key={user.userId} button>
+              <ListItemText primary={user.userId} secondary={user.score} />
+            </ListItem>
+          ))}
+        </List>
+        {error && <div>Sorry, can not display the data</div>}
+        {loading && <div>Loading</div>}
+      </div>
+    );
   }
 }

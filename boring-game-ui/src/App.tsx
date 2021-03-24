@@ -3,15 +3,13 @@ import React from 'react';
 import './App.css';
 import Leaderboard from './leaderboard/Leaderboard';
 
-type AppProps = {}
-
 export default class App extends React.Component {
-  constructor(props: AppProps) {
+  constructor(props: Record<string, unknown>) {
     super(props);
     this.state = {};
   }
 
-  render() {
+  render(): React.ReactNode {
     return (
       <div className="App">
         <Leaderboard />
