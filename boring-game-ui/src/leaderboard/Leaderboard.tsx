@@ -1,7 +1,12 @@
-import { List, ListItem, ListItemText } from '@material-ui/core';
+import { Box, List, ListItem, ListItemText, CircularProgress } from '@material-ui/core';
 import React, { Component } from 'react';
 import User from '../models/user.model';
 import './Leaderboard.css';
+
+interface LeaderboardProps {
+  refresh: boolean;
+  leaderboardLoaded?: () => void;
+}
 
 type LeaderboardState = {
   loading: boolean;
@@ -9,8 +14,8 @@ type LeaderboardState = {
   error: boolean;
 };
 
-export default class Leaderboard extends Component<Record<string, unknown>, LeaderboardState> {
-  constructor(props: Record<string, unknown>) {
+export default class Leaderboard extends Component<LeaderboardProps, LeaderboardState> {
+  constructor(props: LeaderboardProps) {
     super(props);
     this.state = {
       loading: true,
@@ -23,7 +28,15 @@ export default class Leaderboard extends Component<Record<string, unknown>, Lead
     this.getUserScores();
   }
 
+  componentDidUpdate(): void {
+    const { refresh } = this.props;
+    if (refresh) {
+      this.getUserScores();
+    }
+  }
+
   private getUserScores = async () => {
+    const { leaderboardLoaded } = this.props;
     fetch('/api/v1/scores/')
       .then((res) => res.json())
       .then((res) => {
@@ -31,6 +44,11 @@ export default class Leaderboard extends Component<Record<string, unknown>, Lead
       })
       .catch(() => {
         this.setState({ loading: false, error: true });
+      })
+      .finally(() => {
+        if (leaderboardLoaded) {
+          leaderboardLoaded();
+        }
       });
   };
 
@@ -46,7 +64,17 @@ export default class Leaderboard extends Component<Record<string, unknown>, Lead
           ))}
         </List>
         {error && <div>Sorry, can not display the data</div>}
-        {loading && <div>Loading</div>}
+        {loading && (
+          <Box
+            className="spinnerContainer"
+            display="flex"
+            flexDirection="row"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <CircularProgress />
+          </Box>
+        )}
       </div>
     );
   }
