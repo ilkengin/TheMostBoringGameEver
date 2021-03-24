@@ -1,4 +1,5 @@
 import { Box, List, ListItem, ListItemText, CircularProgress } from '@material-ui/core';
+import Pagination from '@material-ui/lab/Pagination';
 import React, { Component } from 'react';
 import User from '../models/user.model';
 import './Leaderboard.css';
@@ -9,8 +10,11 @@ interface LeaderboardProps {
 }
 
 type LeaderboardState = {
-  loading: boolean;
   users: User[];
+  pageCount: number;
+  pageSize: number;
+  currentPage: number;
+  loading: boolean;
   error: boolean;
 };
 
@@ -20,8 +24,13 @@ export default class Leaderboard extends Component<LeaderboardProps, Leaderboard
     this.state = {
       loading: true,
       error: false,
-      users: []
+      users: [],
+      pageCount: 1,
+      pageSize: 10,
+      currentPage: 0
     };
+
+    this.handlePageChange = this.handlePageChange.bind(this);
   }
 
   componentDidMount(): void {
@@ -35,12 +44,25 @@ export default class Leaderboard extends Component<LeaderboardProps, Leaderboard
     }
   }
 
-  private getUserScores = async () => {
+  private handlePageChange(_e: React.ChangeEvent<unknown>, page: number) {
+    this.getUserScores(page - 1);
+  }
+
+  private getUserScores(page?: number): void {
     const { leaderboardLoaded } = this.props;
-    fetch('/api/v1/scores/')
+    const { currentPage, pageSize } = this.state;
+
+    const newPage = page ?? currentPage;
+
+    fetch(`/api/v1/scores?page=${newPage}&size=${pageSize}`, {})
       .then((res) => res.json())
       .then((res) => {
-        this.setState({ loading: false, users: res.content });
+        this.setState({
+          loading: false,
+          users: res.content,
+          currentPage: newPage,
+          pageCount: res.totalPages
+        });
       })
       .catch(() => {
         this.setState({ loading: false, error: true });
@@ -50,20 +72,34 @@ export default class Leaderboard extends Component<LeaderboardProps, Leaderboard
           leaderboardLoaded();
         }
       });
-  };
+  }
 
   render(): React.ReactNode {
-    const { loading, users, error } = this.state;
+    const { loading, users, error, pageCount, currentPage } = this.state;
     return (
-      <div>
-        <List aria-label="leaderboard list">
-          {users.map((user) => (
-            <ListItem key={user.userId} button>
-              <ListItemText primary={user.userId} secondary={user.score} />
-            </ListItem>
-          ))}
-        </List>
-        {error && <div>Sorry, can not display the data</div>}
+      <Box display="flex" flexDirection="column">
+        <Box className="listContainer">
+          <List aria-label="leaderboard list">
+            {users.map((user) => (
+              <ListItem key={user.userId} button>
+                <ListItemText primary={user.userId} secondary={user.score} />
+              </ListItem>
+            ))}
+            {error && (
+              <ListItem>
+                <ListItemText primary="Sorry, can not display the data" />
+              </ListItem>
+            )}
+          </List>
+        </Box>
+        <Box className="paginationContainer">
+          <Pagination
+            count={pageCount}
+            defaultPage={currentPage + 1}
+            onChange={this.handlePageChange}
+            shape="rounded"
+          />
+        </Box>
         {loading && (
           <Box
             className="spinnerContainer"
@@ -75,7 +111,7 @@ export default class Leaderboard extends Component<LeaderboardProps, Leaderboard
             <CircularProgress />
           </Box>
         )}
-      </div>
+      </Box>
     );
   }
 }
