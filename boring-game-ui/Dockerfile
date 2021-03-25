@@ -11,5 +11,5 @@ COPY --from=build-ui-stage node_modules/ node_modules/
 COPY --from=build-ui-stage build/ build/
 COPY --from=build-ui-stage public/ public/
 COPY --from=build-ui-stage app.js app.js
-CMD ["node app.js"]
+CMD ["node", "app.js"]
 EXPOSE 3000
