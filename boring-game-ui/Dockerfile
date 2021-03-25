@@ -1,13 +1,15 @@
-FROM node:latest AS build-ui-stage
+FROM node:12.18.3 AS build-ui-stage
 ADD . .
 RUN npm install
 RUN npm run build
 
-FROM node:latest AS build-ui-image-stage
+FROM node:12.18.3 AS build-ui-image-stage
 MAINTAINER "Ilkan Engin"
 LABEL version="1.0"
 LABEL description="Boring Game UI"
-RUN npm install -g serve
+COPY --from=build-ui-stage node_modules/ node_modules/
 COPY --from=build-ui-stage build/ build/
-CMD ["serve -l 4200 -s build"]
-EXPOSE 4200
+COPY --from=build-ui-stage public/ public/
+COPY --from=build-ui-stage app.js app.js
+CMD ["node app.js"]
+EXPOSE 3000
